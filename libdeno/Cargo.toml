@@ -1,0 +1,19 @@
+[package]
+name = "libdeno"
+version = "0.0.0-local"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Deno Static C Library"
+
+[lib]
+name = "deno"
+path = "src/lib.rs"
+doc = false
+crate-type = ["staticlib"]
+
+[dependencies]
+deno = { path = "../cli" }
+anyhow.workspace = true
+log.workspace = true

@@ -1,0 +1,208 @@
+name: Release
+run-name: Release ${{ inputs.tag }}
+
+on:
+  push:
+    branches:
+      - "main"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: |
+          The branch of Deno to build
+          e.g. "v2.6.8"
+        type: string
+        
+      linux_container:
+        description: 'The container to use for running the Linux build'
+        required: false
+        default: debian:bullseye
+        type: string
+
+env:
+  DENO_TAG: v2.6.8
+  # DENO_TAG: ${{ inputs.tag }}
+
+jobs:
+  build_linux_amd64:
+    name: 🐥 Linux AMD64
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    container:
+      image: ${{ inputs.linux_container }}
+      env:
+        DENO_TAG: ${{ env.DENO_TAG }}
+        DEBIAN_FRONTEND: noninteractive
+    steps:
+      - uses: actions/checkout@v4
+      # Required for the patches to apply
+      - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - run: git config --global user.name "github-actions[bot]"
+      # OS Updates
+      - run: sudo apt-get update -y
+      - run: sudo apt-get install -y build-essential clang libclang-dev
+      # Instal Rust
+      - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      - run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - run: cargo version
+      # Build Project
+      - run: ./scripts/fetch.bash $DENO_TAG
+      - run: ./scripts/build.bash
+        env: 
+          PROFILE: release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libdeno-linux-amd64
+          path: ${{ github.workspace }}/release/**/*
+          if-no-files-found: error
+          retention-days: 1
+
+  build_linux_arm64:
+    name: 🐥 Linux ARM64
+    runs-on: ubuntu-24.04-arm
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    container:
+      image: ${{ inputs.linux_container }}
+      env:
+        DENO_TAG: ${{ env.DENO_TAG }}
+        DEBIAN_FRONTEND: noninteractive
+    steps:
+      - uses: actions/checkout@v4
+      # Required for the patches to apply
+      - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - run: git config --global user.name "github-actions[bot]"
+      # OS Updates
+      - run: sudo apt-get update -y
+      - run: sudo apt-get install -y build-essential clang libclang-dev
+      # Instal Rust
+      - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      - run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - run: cargo version
+      # Build Project
+      - run: ./scripts/fetch.bash $DENO_TAG
+      - run: ./scripts/build.bash
+        env: 
+          PROFILE: release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libdeno-linux-arm64
+          path: ${{ github.workspace }}/release/**/*
+          if-no-files-found: error
+          retention-days: 1
+
+  build_macos_arm64:
+    name: 🍎 MacOS ARM64
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Required for the patches to apply
+      - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - run: git config --global user.name "github-actions[bot]"
+      # OS Updates
+      # Instal Rust
+      - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      - run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - run: cargo version
+      # Build Project
+      - run: ./scripts/fetch.bash $DENO_TAG
+      - run: ./scripts/build.bash
+        env: 
+          PROFILE: release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libdeno-macos-arm64
+          path: ${{ github.workspace }}/release/**/*
+          if-no-files-found: error
+          retention-days: 1
+
+  build_windows_amd64:
+    name: 🟦 Windows amd64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Required for the patches to apply
+      - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - run: git config --global user.name "github-actions[bot]"
+      # OS Updates
+      # Instal Rust
+      - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      - run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - run: cargo version
+      # Build Project
+      - run: . .\scripts\fetch.ps1 $env:DENO_TAG
+      - run: . .\scripts\build.ps1
+        env: 
+          TARGET: x86_64-pc-windows-msvc
+          PROFILE: release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libdeno-windows-amd64
+          path: ${{ github.workspace }}/release/**/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish-github-release:
+    name: "🔁 Github Release"
+    runs-on: ubuntu-latest
+    needs: 
+      - build_linux_amd64
+      - build_linux_arm64
+      - build_macos_arm64
+      - build_windows_amd64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: libdeno-*
+          path: release
+          merge-multiple: true
+      - name: Publish` Github Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+
+          ls -l
+          ls -l release
+
+          cd release
+
+          for name in *; do
+            echo $name
+            cd "${{ github.workspace }}/release/${name}"
+            ls -l
+          done
+         
+
+
+# set -e
+
+# tag=$(echo "${{ inputs.tag }}" | iconv -c -t ascii//TRANSLIT | sed -E 's/[~^]+//g' | sed -E 's/^-+|-+$//g' | tr '/' '-' | tr A-Z a-z)
+# echo "Tag: ${tag}"
+
+# gh release create $tag  --draft --notes "Automatically built binaries\nLinux binaries built on ${{inputs.linux_container}}"
+# gh release edit $tag --title "${{ inputs.tag }}"
+
+# cd release
+
+# for name in *; do
+#   cd "${{ github.workspace }}/release/${name}"
+
+#   tar -czvf "./${name}.tar.gz" ./*
+#   gh release upload $tag "${name}.tar.gz"
+#   rm -rf *.tar.gz
+
+#   tar -cJvf "./${name}.tar.xz" ./*
+#   gh release upload $tag "${name}.tar.xz"
+#   rm -rf *.tar.xz
+
+#   zip "${name}" ./*
+#   gh release upload $tag "${name}.zip"
+#   rm -rf *.zip
+# done
+
+# gh release edit $tag --draft=false
