@@ -163,11 +163,11 @@ jobs:
         run: |
           set -e
 
-          tag=$(echo "${{ inputs.tag }}" | iconv -c -t ascii//TRANSLIT | sed -E 's/[~^]+//g' | sed -E 's/^-+|-+$//g' | tr '/' '-' | tr A-Z a-z)
+          tag=$(echo "${{ env.DENO_TAG }}" | iconv -c -t ascii//TRANSLIT | sed -E 's/[~^]+//g' | sed -E 's/^-+|-+$//g' | tr '/' '-' | tr A-Z a-z)
           echo "Tag: ${tag}"
 
-          gh release create $tag  --draft --notes "Automatically built binaries"
-          gh release edit $tag --title "${{ inputs.tag }}"
+          gh release create $tag --draft --notes "Automatically built binaries"
+          gh release edit $tag --title "${{ env.DENO_TAG }}"
 
           for name in *; do
             echo $name
