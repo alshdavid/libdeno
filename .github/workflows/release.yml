@@ -163,43 +163,27 @@ jobs:
         run: |
           set -e
 
-          ls -l
-          ls -l release
+          tag=$(echo "${{ inputs.tag }}" | iconv -c -t ascii//TRANSLIT | sed -E 's/[~^]+//g' | sed -E 's/^-+|-+$//g' | tr '/' '-' | tr A-Z a-z)
+          echo "Tag: ${tag}"
 
-          cd release
+          gh release create $tag  --draft --notes "Automatically built binaries"
+          gh release edit $tag --title "${{ inputs.tag }}"
 
           for name in *; do
             echo $name
             cd "${{ github.workspace }}/release/${name}"
-            ls -l
+
+            tar -czvf "./${name}.tar.gz" ./*
+            gh release upload $tag "${name}.tar.gz"
+            rm -rf *.tar.gz
+
+            tar -cJvf "./${name}.tar.xz" ./*
+            gh release upload $tag "${name}.tar.xz"
+            rm -rf *.tar.xz
+
+            zip "${name}" ./*
+            gh release upload $tag "${name}.zip"
+            rm -rf *.zip
           done
-         
 
-
-# set -e
-
-# tag=$(echo "${{ inputs.tag }}" | iconv -c -t ascii//TRANSLIT | sed -E 's/[~^]+//g' | sed -E 's/^-+|-+$//g' | tr '/' '-' | tr A-Z a-z)
-# echo "Tag: ${tag}"
-
-# gh release create $tag  --draft --notes "Automatically built binaries\nLinux binaries built on ${{inputs.linux_container}}"
-# gh release edit $tag --title "${{ inputs.tag }}"
-
-# cd release
-
-# for name in *; do
-#   cd "${{ github.workspace }}/release/${name}"
-
-#   tar -czvf "./${name}.tar.gz" ./*
-#   gh release upload $tag "${name}.tar.gz"
-#   rm -rf *.tar.gz
-
-#   tar -cJvf "./${name}.tar.xz" ./*
-#   gh release upload $tag "${name}.tar.xz"
-#   rm -rf *.tar.xz
-
-#   zip "${name}" ./*
-#   gh release upload $tag "${name}.zip"
-#   rm -rf *.zip
-# done
-
-# gh release edit $tag --draft=false
+          gh release edit $tag --draft=false
