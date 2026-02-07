@@ -169,6 +169,8 @@ jobs:
           gh release create $tag --draft --notes "Automatically built binaries"
           gh release edit $tag --title "${{ env.DENO_TAG }}"
 
+          cd release
+          
           for name in *; do
             echo $name
             cd "${{ github.workspace }}/release/${name}"
