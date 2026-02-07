@@ -1,9 +1,14 @@
+#[cfg(not(unix))]
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::ffi::CStr;
 use std::os::raw::c_char;
 
 use libdeno::LibWorkerFactoryRoots;
+#[cfg(not(unix))]
+use libdeno::UnconfiguredRuntime;
 use libdeno::create_and_run_current_thread_with_maybe_metrics;
+#[cfg(unix)]
 use libdeno::wait_for_start;
 use libdeno::tools::run::eval_command;
 use libdeno::args::EvalFlags;
@@ -17,7 +22,7 @@ pub extern "C" fn deno_embedded_eval(code: *const c_char) -> i32 {
     }
 
     let c_str = unsafe { CStr::from_ptr(code) };
-    
+
     let code = match c_str.to_str() {
         Ok(s) => s.to_string(),
         Err(_) => return -2,
@@ -26,11 +31,11 @@ pub extern "C" fn deno_embedded_eval(code: *const c_char) -> i32 {
     // TODO get from args
     let flags = Arc::new(Flags::default());
 
-    let args: Vec<_> = std::env::args_os().collect();
+    let _args: Vec<_> = std::env::args_os().collect();
 
     let fut = async move {
-      let roots = LibWorkerFactoryRoots::default();
-      
+      let _roots = LibWorkerFactoryRoots::default();
+
       #[cfg(unix)]
       let (waited_unconfigured_runtime, _waited_args, _waited_cwd) =
         match wait_for_start(&args, roots.clone()) {
@@ -47,7 +52,7 @@ pub extern "C" fn deno_embedded_eval(code: *const c_char) -> i32 {
         };
 
       #[cfg(not(unix))]
-      let (waited_unconfigured_runtime, waited_args, waited_cwd) = (None, None, None);
+      let (waited_unconfigured_runtime, _waited_args, _waited_cwd) = (None::<UnconfiguredRuntime>, None::<Vec<std::ffi::OsString>>, None::<PathBuf>);
 
       // let args = waited_args.unwrap_or(args);
       // let initial_cwd = waited_cwd.map(Some).unwrap_or_else(|| {
@@ -72,7 +77,7 @@ pub extern "C" fn deno_embedded_eval(code: *const c_char) -> i32 {
       }).await
     };
 
-    
+
     match create_and_run_current_thread_with_maybe_metrics(fut){
         Ok(exit_code) => exit_code,
         Err(err) => {

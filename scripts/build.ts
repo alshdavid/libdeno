@@ -10,7 +10,7 @@ const PATCH_DIR = path.join(ROOT_DIR, 'patches');
 const LIBDENO_DIR = path.join(ROOT_DIR, 'libdeno');
 
 // Determine architecture
-let ARCH = Deno.env.get("ARCH") || "";
+let ARCH = Deno.env.get("BUILD_ARCH") || "";
 if (!ARCH) {
   const arch = Deno.build.arch;
   switch (arch) {
@@ -26,7 +26,7 @@ if (!ARCH) {
 }
 
 // Determine OS
-let OS = Deno.env.get("OS") || "";
+let OS = Deno.env.get("BUILD_OS") || "";
 if (!OS) {
   const os = Deno.build.os;
   switch (os) {
@@ -86,6 +86,7 @@ console.error(`ARCH: ${ARCH}`);
 console.error(`OS: ${OS}`);
 console.error(`CARGO_TARGET: ${CARGO_TARGET}`);
 console.error(`CARGO_PROFILE: ${CARGO_PROFILE}`);
+
 
 // Validate
 if (!CARGO_TARGET) {
