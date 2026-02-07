@@ -1,12 +1,13 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-run --allow-env
+import * as path from "jsr:@std/path";
 
-const CURR_DIR = new URL(".", import.meta.url).pathname;
-const ROOT_DIR = new URL("..", import.meta.url).pathname;
+const DIRNAME = path.dirname(path.fromFileUrl(new URL(import.meta.url)));
+const ROOT_DIR = path.dirname(DIRNAME);
 
-const OUT_DIR = `${ROOT_DIR}/release`;
-const DENO_DIR = `${ROOT_DIR}/deno`;
-const PATCH_DIR = `${ROOT_DIR}/patches`;
-const LIBDENO_DIR = `${ROOT_DIR}/libdeno`;
+const OUT_DIR = path.join(ROOT_DIR, 'release');
+const DENO_DIR = path.join(ROOT_DIR, 'deno');
+const PATCH_DIR = path.join(ROOT_DIR, 'patches');
+const LIBDENO_DIR = path.join(ROOT_DIR, 'libdeno');
 
 // Determine architecture
 let ARCH = Deno.env.get("ARCH") || "";
@@ -118,13 +119,13 @@ await Deno.mkdir(`${OUT_DIR}/${OS_ARCH}`, { recursive: true });
 
 // Determine library name and extension
 let LIBNAME = "libdeno.a";
-let EXT = ".a";
+let EXT = "a";
 if (OS === "windows") {
   LIBNAME = "deno.lib";
-  EXT = ".lib";
+  EXT = "lib";
 }
 
 // Copy library
-const sourcePath = `${DENO_DIR}/target/${CARGO_TARGET}/${PROFILE}/${LIBNAME}`;
-const destPath = `${OUT_DIR}/${OS_ARCH}/libdeno${EXT}`;
+const sourcePath = path.join(DENO_DIR, 'target', CARGO_TARGET, PROFILE, LIBNAME);
+const destPath = path.join(OUT_DIR, OS_ARCH, `libdeno.${EXT}`);
 await Deno.copyFile(sourcePath, destPath);

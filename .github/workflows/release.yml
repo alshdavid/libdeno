@@ -126,10 +126,11 @@ jobs:
       - run: git config --global user.name "github-actions[bot]"
       # OS Updates
       # Instal Deps
+      - run: choco install wget
       - run: sh ./.github/scripts/install-deno.sh
       - run: sh ./.github/scripts/install-rust.sh
       # Build Project
-      - run: deno -A ./scripts/fetch.ts $DENO_TAG
+      - run: deno -A ./scripts/fetch.ts $env:DENO_TAG
       - run: deno -A ./scripts/build.ts
         env: 
           TARGET: x86_64-pc-windows-msvc

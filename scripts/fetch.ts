@@ -1,12 +1,13 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-run --allow-env
+import * as path from "jsr:@std/path";
 
-const CURR_DIR = new URL(".", import.meta.url).pathname;
-const ROOT_DIR = new URL("..", import.meta.url).pathname;
+const DIRNAME = path.dirname(path.fromFileUrl(new URL(import.meta.url)));
+const ROOT_DIR = path.dirname(DIRNAME);
 
-const OUT_DIR = `${ROOT_DIR}/release`;
-const DENO_DIR = `${ROOT_DIR}/deno`;
-const PATCH_DIR = `${ROOT_DIR}/patches`;
-const LIBDENO_DIR = `${ROOT_DIR}/libdeno`;
+const OUT_DIR = path.join(ROOT_DIR, 'release');
+const DENO_DIR = path.join(ROOT_DIR, 'deno');
+const PATCH_DIR = path.join(ROOT_DIR, 'patches');
+const LIBDENO_DIR = path.join(ROOT_DIR, 'libdeno');
 
 const TAG = Deno.args[0];
 
@@ -52,7 +53,7 @@ if (!cloneStatus.success) {
 }
 
 // Create symlink
-const symlinkTarget = `${DENO_DIR}/libdeno`;
+const symlinkTarget = path.join(DENO_DIR, 'libdeno');
 try {
   await Deno.remove(symlinkTarget);
 } catch {
@@ -66,7 +67,7 @@ Deno.chdir(DENO_DIR);
 
 // Apply patch
 const applyProcess = new Deno.Command("git", {
-  args: ["apply", '--ignore-space-change', '--ignore-whitespace', `${PATCH_DIR}/deno.patch`],
+  args: ["apply", '--ignore-space-change', '--ignore-whitespace', path.join(PATCH_DIR, 'deno.patch')],
 }).spawn();
 
 const applyStatus = await applyProcess.status;
@@ -84,14 +85,14 @@ await addProcess.status;
 
 // Reset libdeno
 const resetLibdenoProcess = new Deno.Command("git", {
-  args: ["reset", `${DENO_DIR}/libdeno`],
+  args: ["reset", path.join(DENO_DIR, 'libdeno')],
 }).spawn();
 
 await resetLibdenoProcess.status;
 
 // Reset Cargo.lock
 const resetCargoProcess = new Deno.Command("git", {
-  args: ["reset", `${DENO_DIR}/Cargo.lock`],
+  args: ["reset", path.join(DENO_DIR, 'Cargo.lock')],
 }).spawn();
 
 await resetCargoProcess.status;
