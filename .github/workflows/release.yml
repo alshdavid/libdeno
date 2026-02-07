@@ -43,13 +43,12 @@ jobs:
       # OS Updates
       - run: sudo apt-get update -y
       - run: sudo apt-get install -y build-essential clang libclang-dev
-      # Instal Rust
-      - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-      - run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      - run: cargo version
+      # Instal Deps
+      - run: sh ./.github/scripts/install-deno.sh
+      - run: sh ./.github/scripts/install-rust.sh
       # Build Project
-      - run: ./scripts/fetch.bash $DENO_TAG
-      - run: ./scripts/build.bash
+      - run: deno -A ./scripts/fetch.ts $DENO_TAG
+      - run: deno -A ./scripts/build.ts
         env: 
           PROFILE: release
       - uses: actions/upload-artifact@v4
@@ -78,13 +77,12 @@ jobs:
       # OS Updates
       - run: sudo apt-get update -y
       - run: sudo apt-get install -y build-essential clang libclang-dev
-      # Instal Rust
-      - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-      - run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      - run: cargo version
+      # Instal Deps
+      - run: sh ./.github/scripts/install-deno.sh
+      - run: sh ./.github/scripts/install-rust.sh
       # Build Project
-      - run: ./scripts/fetch.bash $DENO_TAG
-      - run: ./scripts/build.bash
+      - run: deno -A ./scripts/fetch.ts $DENO_TAG
+      - run: deno -A ./scripts/build.ts
         env: 
           PROFILE: release
       - uses: actions/upload-artifact@v4
@@ -103,13 +101,12 @@ jobs:
       - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - run: git config --global user.name "github-actions[bot]"
       # OS Updates
-      # Instal Rust
-      - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-      - run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      - run: cargo version
+      # Instal Deps
+      - run: sh ./.github/scripts/install-deno.sh
+      - run: sh ./.github/scripts/install-rust.sh
       # Build Project
-      - run: ./scripts/fetch.bash $DENO_TAG
-      - run: ./scripts/build.bash
+      - run: deno -A ./scripts/fetch.ts $DENO_TAG
+      - run: deno -A ./scripts/build.ts
         env: 
           PROFILE: release
       - uses: actions/upload-artifact@v4
@@ -128,13 +125,12 @@ jobs:
       - run: git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - run: git config --global user.name "github-actions[bot]"
       # OS Updates
-      # Instal Rust
-      - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-      - run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      - run: cargo version
+      # Instal Deps
+      - run: sh ./.github/scripts/install-deno.sh
+      - run: sh ./.github/scripts/install-rust.sh
       # Build Project
-      - run: . .\scripts\fetch.ps1 $env:DENO_TAG
-      - run: . .\scripts\build.ps1
+      - run: deno -A ./scripts/fetch.ts $DENO_TAG
+      - run: deno -A ./scripts/build.ts
         env: 
           TARGET: x86_64-pc-windows-msvc
           PROFILE: release
