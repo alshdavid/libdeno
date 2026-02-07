@@ -31,10 +31,12 @@ pub extern "C" fn deno_embedded_eval(code: *const c_char) -> i32 {
     // TODO get from args
     let flags = Arc::new(Flags::default());
 
-    let _args: Vec<_> = std::env::args_os().collect();
+    #[cfg(unix)]
+    let args: Vec<_> = std::env::args_os().collect();
 
     let fut = async move {
-      let _roots = LibWorkerFactoryRoots::default();
+      #[cfg(unix)]
+      let roots = LibWorkerFactoryRoots::default();
 
       #[cfg(unix)]
       let (waited_unconfigured_runtime, _waited_args, _waited_cwd) =
